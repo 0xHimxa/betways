@@ -12,7 +12,7 @@ docs/
 
 # Dotenv file
 .env
-
-lib
+# libfolder
+lib/
 
 
