@@ -1,0 +1,1 @@
+you have not test buyticket faild due to calculating

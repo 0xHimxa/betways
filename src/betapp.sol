@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.30;
 
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
@@ -10,23 +10,37 @@ import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFCo
 
 
 
-error FailedTo__BuyTicket_AmountNotEnough(string name );
-
 
 contract BetApp is VRFConsumerBaseV2Plus{
 
+error FailedTo__BuyTicket_AmountNotEnough(string name );
+
+error FailedTo__BuyTicket_TryAgain();
+error TimeForPicking_Players_Not_ReachedYet();
 
 
+event NewPlayerBuyTicket(address indexed player);
 
-uint256 private constant MINWORDS = 1;
+
+enum BettingState{
+OPEN,
+CLOSED
+
+
+}
+
+
+uint32 private constant MINWORDS = 1;
 uint256 private immutable TICKET_FEE;
 
-address[] private players;
+address[]   s_players;
 uint256 private immutable interval;
-uint32 private immutable gaslane;
+bytes32 private immutable gaslane;
 uint32 private immutable callbackgaslim;
 uint256  private immutable subscriptionId;
 uint256 private immutable lastTimeStamp;
+BettingState private  s_bettingState = BettingState.OPEN;
+
 
 
 
@@ -42,7 +56,7 @@ uint256 _interval,
 address vrfcoordinator,
 uint256 subId,
 uint256 ticketPrice,
-uint32 _gaslane,
+bytes32 _gaslane,
 uint32 _callbackgaslim
 
 
@@ -66,33 +80,81 @@ uint32 _callbackgaslim
 
 function buyTicket() external payable{
 
+
+if(s_bettingState == BettingState.CLOSED) revert FailedTo__BuyTicket_TryAgain();
+
 if(msg.value < TICKET_FEE){
-revert FailedTo__BuyTicket_AmountNotEnough('increase money to buy ticket');
+ revert FailedTo__BuyTicket_AmountNotEnough('increase money to buy ticket');
 
 
-players.push(msg.sender);
 
+}else{
+   s_players.push(msg.sender);
+emit NewPlayerBuyTicket(msg.sender);
 }
+
 
 }
 
 
 function requestRandomWords() external{
 
+if((block.timestamp - lastTimeStamp) < interval)  revert TimeForPicking_Players_Not_ReachedYet();
 
-bool performaction= players.length > 0 && address(this).balance > 0 && (block.timestamp - lastTimeStamp) > interval;
+bool performaction= s_players.length > 0 && address(this).balance > 0 && s_bettingState == BettingState.OPEN;
 
-// if(performaction){
-
-
+if(!performaction) revert FailedTo__BuyTicket_TryAgain();
 
 
-// }
+
+s_bettingState = BettingState.CLOSED;
+
+
+ uint256 s_requestId = s_vrfCoordinator.requestRandomWords(
+      VRFV2PlusClient.RandomWordsRequest({
+        keyHash:gaslane,
+        subId: subscriptionId,
+        requestConfirmations: 3,
+        callbackGasLimit: callbackgaslim,
+        numWords: MINWORDS,
+        extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
+      })
+    );
+
+
 }
 
 
 function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override{}
 
+
+
+
+function getPlayers(uint256 index) external view returns(address){
+
+  return s_players[index];
+
+}
+
+
+function getInterval() external view returns(uint256){
+
+  return interval;
+
+}
+
+
+function getTicketFee() external view returns(uint256){
+
+  return TICKET_FEE;
+
+}
+
+function getBettingState() external view returns(BettingState){
+
+  return s_bettingState;
+
+}
 
 
 }
