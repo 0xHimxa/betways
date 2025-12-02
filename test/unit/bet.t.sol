@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.19;
 
 import {Test} from 'forge-std/Test.sol';
 
@@ -131,30 +131,30 @@ betApp.requestRandomWords();
 
 
 
-// this test will aways fail= will worked wen i setup chailink consumerId
 
 
-// function testBuyTicketFaildDueToStateChange() external{
 
-// vm.prank(player);
+function testBuyTicketFaildDueToStateChange() external{
 
-// betApp.buyTicket{value: ticketPrice}();
+vm.prank(player);
 
-// vm.warp(block.timestamp + interval + 1);
+betApp.buyTicket{value: ticketPrice}();
 
-// // commented requestwords chainlink code to test it
+vm.warp(block.timestamp + interval + 1);
 
-
-//  betApp.requestRandomWords();
+// commented requestwords chainlink code to test it
 
 
-// vm.expectRevert(BetApp.FailedTo__BuyTicket_TryAgain.selector);
-// vm.prank(player);
-
-// betApp.buyTicket{value: ticketPrice}();
+ betApp.requestRandomWords();
 
 
-// }
+vm.expectRevert(BetApp.FailedTo__BuyTicket_TryAgain.selector);
+vm.prank(player);
+
+betApp.buyTicket{value: ticketPrice}();
+
+
+}
 
 
 
@@ -173,6 +173,14 @@ vm.warp(block.timestamp + interval + 2);
 }
 
 
+
+function testFullfillRandomWordsRevertStateNotClosed() external{
+
+
+
+
+
+}
 
 
 

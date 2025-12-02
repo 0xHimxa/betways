@@ -1,19 +1,31 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.19;
 
 import {Script} from 'forge-std/Script.sol';
 import {BetApp} from 'src/betapp.sol';
-
+import {LinkToken} from 'test/mocks/linkToken.sol';
 import {VRFCoordinatorV2_5Mock} from '@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol';
-contract HelperConfig is Script{
+
+abstract contract ConstantCode{
+
+uint256 constant SEPOLIA_CHAIN_ID = 11155111;
+uint256  constant LOCAL_HOST_CHAIN_ID = 31337;
+
+
+}
+
+
+
+
+
+contract HelperConfig is Script, ConstantCode{
 
  /** VRF Mock Values */
     uint96 public MOCK_BASE_FEE = 0.015 ether;
     uint96 public MOCK_GAS_PRICE_LINK = 1e9;
  //Link / Eth price
     int256  public MOCK_WEI_PER_UINT_LINK = 4e15;
-uint256 private constant SEPOLIA_CHAIN_ID = 11155111;
-uint256 private constant LOCAL_HOST_CHAIN_ID = 31337;
+
 NetWorkConfig private  localNetWorkConfig;
 mapping(uint256 chainId => NetWorkConfig) private networkConfig;
 
@@ -28,6 +40,7 @@ uint256 ticketPrice;
 uint256 interval;
 bytes32 gaslane;
 uint32  callbackgaslim;
+address link;
 
 
 
@@ -72,7 +85,8 @@ NetWorkConfig memory sepliaCong = NetWorkConfig({
     ticketPrice: 0.01 ether,// 1e16
         interval: 30, //30 seconds
         gaslane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
-callbackgaslim: 50000
+callbackgaslim: 50000,
+link: 0x514910771AF9Ca656af840dff83E8264EcF986CA
 
 
 });
@@ -89,6 +103,8 @@ if(localNetWorkConfig.vrfCoordinator != address(0)) return localNetWorkConfig;
 
 
 vm.startBroadcast();
+
+LinkToken link = new LinkToken();
 VRFCoordinatorV2_5Mock vrfCoordinator = new VRFCoordinatorV2_5Mock(MOCK_BASE_FEE, MOCK_GAS_PRICE_LINK, MOCK_WEI_PER_UINT_LINK);
 
 vm.stopBroadcast();
@@ -102,7 +118,8 @@ vm.stopBroadcast();
     ticketPrice: 0.01 ether,// 1e16
         interval: 30, //30 seconds
         gaslane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
-callbackgaslim: 50000
+callbackgaslim: 50000,
+link: address(link)
 
 
 
