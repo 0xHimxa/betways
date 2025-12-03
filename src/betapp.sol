@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.19;
 
 import {
     VRFV2PlusClient
@@ -16,8 +16,11 @@ contract BetApp is VRFConsumerBaseV2Plus {
     error Betting_Need_To_Close_First( );
     error FailedTo__SendMoney_To_Winner();
 
+
     event NewPlayerBuyTicket(address indexed player);
 event LuckyWinnerSelected(address indexed winner);
+event RequestLuckyWinnerId(uint256 indexed winner);
+
     enum BettingState {
         OPEN,
         CLOSED
@@ -90,6 +93,8 @@ event LuckyWinnerSelected(address indexed winner);
                 )
             })
         );
+
+        emit RequestLuckyWinnerId(s_requestId);
     }
 
     function fulfillRandomWords(
@@ -97,7 +102,7 @@ event LuckyWinnerSelected(address indexed winner);
         uint256[] calldata randomWords
     ) internal override {
 
-if(s_bettingState != BettingState.CLOSED)revert Betting_Need_To_Close_First(); 
+//if(s_bettingState != BettingState.CLOSED)revert Betting_Need_To_Close_First(); 
 
 uint256 pickWinnerIndex = randomWords[0] % s_players.length;
 address pickedWinner = s_players[pickWinnerIndex];
@@ -133,5 +138,9 @@ address pickedWinner = s_players[pickWinnerIndex];
 
     function getBettingState() external view returns (BettingState) {
         return s_bettingState;
+    }
+
+    function getLuckyWinner() external view returns (address) {
+        return luckyWinner;
     }
 }
